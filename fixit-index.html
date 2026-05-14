@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>FixIt — Repair Guide Prototype</title>
+  <style>
+    :root {
+      --bg: #101417;
+      --panel: #171d21;
+      --panel2: #20282e;
+      --card: #252f36;
+      --line: #3a464e;
+      --text: #f6f2e8;
+      --muted: #b8c0c4;
+      --gold: #d8a947;
+      --gold2: #f4d27a;
+      --green: #65d488;
+      --red: #f16f6f;
+      --blue: #72c9f4;
+      --warn: #f2b84b;
+      --shadow: 0 18px 40px rgba(0,0,0,.35);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top left, #28333a 0, #101417 42%, #080b0d 100%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 14px;
+      padding-bottom: 92px;
+    }
+
+    button, input, textarea, select {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 11px 15px;
+      background: var(--panel2);
+      color: var(--text);
+      cursor: pointer;
+      min-height: 44px;
+    }
+
+    button:active { transform: scale(.98); }
+
+    .app {
+      width: min(1080px, 100%);
+      margin: 0 auto;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 0 14px;
+      backdrop-filter: blur(14px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 15px;
+      background: linear-gradient(135deg, var(--gold2), var(--gold));
+      color: #201306;
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+      font-weight: 900;
+      box-shadow: 0 10px 26px rgba(216,169,71,.28);
+      flex: 0 0 auto;
+    }
+
+    h1, h2, h3, p { margin: 0; }
+
+    h1 { font-size: 22px; line-height: 1; }
+    .subtitle { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+      background: rgba(255,255,255,.04);
+    }
+
+    .hero {
+      background: linear-gradient(145deg, rgba(216,169,71,.16), rgba(255,255,255,.04));
+      border: 1px solid rgba(244,210,122,.22);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      margin-bottom: 14px;
+    }
+
+    .hero h2 { font-size: 25px; margin-bottom: 8px; }
+    .hero p { color: var(--muted); line-height: 1.45; font-size: 14px; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    .panel {
+      background: rgba(23,29,33,.9);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 15px;
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .panel-title h3 { font-size: 17px; }
+
+    label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+      margin: 13px 0 7px;
+    }
+
+    textarea, input, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #0d1114;
+      color: var(--text);
+      padding: 13px;
+      outline: none;
+      min-height: 48px;
+    }
+
+    textarea { min-height: 105px; resize: vertical; }
+
+    .actions {
+      display: flex;
+      gap: 9px;
+      flex-wrap: wrap;
+      margin-top: 13px;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--gold2), var(--gold));
+      color: #1a1205;
+      font-weight: 900;
+      box-shadow: 0 10px 28px rgba(216,169,71,.22);
+    }
+
+    .danger {
+      background: rgba(241,111,111,.14);
+      color: #ffd6d6;
+      border: 1px solid rgba(241,111,111,.35);
+    }
+
+    .ghost {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+    }
+
+    .photo-box {
+      min-height: 150px;
+      border: 1.5px dashed rgba(244,210,122,.38);
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 16px;
+      color: var(--muted);
+      background: rgba(255,255,255,.03);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .photo-box img {
+      max-width: 100%;
+      max-height: 260px;
+      border-radius: 14px;
+      display: block;
+    }
+
+    .question {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 11px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      margin-bottom: 9px;
+    }
+
+    .question input {
+      width: 20px;
+      height: 20px;
+      min-height: 20px;
+      margin-top: 1px;
+      accent-color: var(--gold);
+      flex: 0 0 auto;
+    }
+
+    .question span {
+      line-height: 1.35;
+      font-size: 14px;
+    }
+
+    .results {
+      display: grid;
+      gap: 10px;
+    }
+
+    .cause-card {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      border-radius: 18px;
+      padding: 13px;
+      cursor: pointer;
+    }
+
+    .cause-card.active {
+      border-color: var(--gold);
+      box-shadow: inset 0 0 0 1px rgba(216,169,71,.25);
+      background: rgba(216,169,71,.10);
+    }
+
+    .cause-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .cause-head strong { font-size: 15px; }
+    .match { color: var(--green); font-weight: 900; font-size: 13px; }
+    .cause-card p { color: var(--muted); line-height: 1.35; font-size: 13px; }
+
+    .detail {
+      display: grid;
+      gap: 12px;
+    }
+
+    .safety {
+      border: 1px solid rgba(242,184,75,.45);
+      background: rgba(242,184,75,.12);
+      border-radius: 18px;
+      padding: 13px;
+      color: #ffe5b2;
+      line-height: 1.4;
+      font-size: 13px;
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .mini-card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 13px;
+      background: rgba(255,255,255,.035);
+    }
+
+    .mini-card h4 { margin: 0 0 8px; font-size: 14px; }
+
+    ul, ol {
+      margin: 0;
+      padding-left: 19px;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 13px;
+    }
+
+    .diagram {
+      height: 160px;
+      border-radius: 18px;
+      background:
+        linear-gradient(90deg, transparent 49%, rgba(114,201,244,.4) 50%, transparent 51%),
+        radial-gradient(circle at 50% 18%, rgba(114,201,244,.35) 0 18px, transparent 19px),
+        linear-gradient(145deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+      border: 1px solid var(--line);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pipe {
+      position: absolute;
+      background: #9aa7ad;
+      border-radius: 999px;
+      box-shadow: inset 0 0 8px rgba(0,0,0,.35);
+    }
+
+    .pipe.vertical { width: 28px; height: 130px; left: calc(50% - 14px); top: 18px; }
+    .pipe.left { width: 118px; height: 24px; left: 38px; top: 92px; }
+    .pipe.right { width: 118px; height: 24px; right: 38px; top: 92px; }
+    .label-dot {
+      position: absolute;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #101417;
+      border: 1px solid var(--gold);
+      color: var(--gold2);
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .dot1 { left: 20px; top: 36px; }
+    .dot2 { right: 18px; top: 116px; }
+
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 20;
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+      background: rgba(10,13,15,.88);
+      border-top: 1px solid var(--line);
+      backdrop-filter: blur(14px);
+    }
+
+    .nav-inner {
+      width: min(1080px, 100%);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .nav-btn {
+      border-radius: 16px;
+      min-height: 54px;
+      padding: 7px 6px;
+      color: var(--muted);
+      font-size: 12px;
+      display: grid;
+      place-items: center;
+      gap: 2px;
+    }
+
+    .nav-btn.active {
+      background: rgba(216,169,71,.16);
+      color: var(--gold2);
+      border: 1px solid rgba(216,169,71,.38);
+    }
+
+    .view { display: none; }
+    .view.active { display: block; }
+
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 18px;
+      line-height: 1.45;
+    }
+
+    .history-item {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: rgba(255,255,255,.04);
+    }
+
+    .history-item strong { display: block; margin-bottom: 5px; }
+    .history-item span { color: var(--muted); font-size: 13px; }
+
+    @media (min-width: 820px) {
+      body { padding: 24px; padding-bottom: 104px; }
+      .grid { grid-template-columns: .95fr 1.05fr; align-items: start; }
+      .mini-grid { grid-template-columns: repeat(2, 1fr); }
+      .hero h2 { font-size: 34px; }
+      .photo-box { min-height: 240px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">🔧</div>
+        <div>
+          <h1>FixIt</h1>
+          <div class="subtitle">Photo-first repair guidance</div>
+        </div>
+      </div>
+      <div class="pill">Prototype v0.1</div>
+    </header>
+
+    <section id="view-diagnose" class="view active">
+      <div class="hero">
+        <h2>Diagnose the problem without guessing.</h2>
+        <p>Start with a photo or description. FixIt asks focused questions, narrows the likely issue, then shows safety notes, tools, parts, and repair steps.</p>
+      </div>
+
+      <div class="grid">
+        <section class="panel">
+          <div class="panel-title">
+            <h3>1. Describe Issue</h3>
+            <span class="pill">Under sink demo</span>
+          </div>
+
+          <label for="systemType">Area / system</label>
+          <select id="systemType">
+            <option>Sink / Drain / Garbage Disposal</option>
+            <option disabled>Toilet — coming soon</option>
+            <option disabled>Dryer — coming soon</option>
+            <option disabled>Light switch — coming soon</option>
+          </select>
+
+          <label for="issueText">What is happening?</label>
+          <textarea id="issueText" placeholder="Example: Garbage disposal stopped working and water is not draining."></textarea>
+
+          <label>Photo</label>
+          <div class="photo-box" id="photoBox">
+            <div>
+              <div style="font-size:34px;margin-bottom:6px;">📸</div>
+              <strong>Add a photo of the problem area</strong>
+              <p style="margin-top:5px;">Camera/file preview only in this prototype.</p>
+            </div>
+          </div>
+          <input id="photoInput" type="file" accept="image/*" capture="environment" style="display:none" />
+          <div class="actions">
+            <button class="ghost" onclick="document.getElementById('photoInput').click()">Add Photo</button>
+            <button class="primary" onclick="runDiagnosis()">Find Possible Issues</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title">
+            <h3>2. Guided Checks</h3>
+            <span class="pill">Safety-aware</span>
+          </div>
+          <div id="questions"></div>
+          <div class="actions">
+            <button class="primary" onclick="runDiagnosis()">Update Results</button>
+            <button class="ghost" onclick="resetForm()">Clear</button>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel" style="margin-top:14px;">
+        <div class="panel-title">
+          <h3>3. Possible Issues</h3>
+          <span class="pill" id="resultCount">0 found</span>
+        </div>
+        <div id="results" class="results">
+          <div class="empty">Describe the issue and answer the checks to see possible causes.</div>
+        </div>
+      </section>
+    </section>
+
+    <section id="view-detail" class="view">
+      <section class="panel detail">
+        <div class="panel-title">
+          <h3 id="detailTitle">Repair Detail</h3>
+          <button class="ghost" onclick="showView('diagnose')">Back</button>
+        </div>
+
+        <div class="safety" id="safetyBox"></div>
+
+        <div class="diagram">
+          <div class="pipe vertical"></div>
+          <div class="pipe left"></div>
+          <div class="pipe right"></div>
+          <div class="label-dot dot1">Trap</div>
+          <div class="label-dot dot2">Disposal</div>
+        </div>
+
+        <div class="mini-grid">
+          <div class="mini-card">
+            <h4>Tools Needed</h4>
+            <ul id="toolsList"></ul>
+          </div>
+          <div class="mini-card">
+            <h4>Parts / Supplies</h4>
+            <ul id="partsList"></ul>
+          </div>
+        </div>
+
+        <div class="mini-card">
+          <h4>Repair Steps</h4>
+          <ol id="stepsList"></ol>
+        </div>
+
+        <div class="actions">
+          <button class="primary" onclick="saveCase()">Save This Case</button>
+          <button class="ghost" onclick="alert('Future premium feature: chat/video call with a verified repair expert.')">Ask Expert</button>
+          <button class="ghost" onclick="alert('Future partner catalog: parts matched to local pickup or shipping.')">Find Parts</button>
+        </div>
+      </section>
+    </section>
+
+    <section id="view-history" class="view">
+      <section class="panel">
+        <div class="panel-title">
+          <h3>Saved Cases</h3>
+          <button class="danger" onclick="clearHistory()">Clear</button>
+        </div>
+        <div id="historyList"></div>
+      </section>
+    </section>
+
+    <section id="view-expert" class="view">
+      <section class="panel">
+        <div class="panel-title">
+          <h3>Expert Help</h3>
+          <span class="pill">Future paid service</span>
+        </div>
+        <div class="empty" style="text-align:left;">
+          <strong>Planned flow:</strong><br><br>
+          1. User sends issue summary, photo, and diagnosis answers.<br>
+          2. App routes to repair category expert.<br>
+          3. User chooses chat, call, or video help.<br>
+          4. Expert can mark the case resolved and recommend exact parts.
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <div class="nav-inner">
+      <button class="nav-btn active" data-nav="diagnose" onclick="showView('diagnose')">🔎<span>Diagnose</span></button>
+      <button class="nav-btn" data-nav="detail" onclick="showView('detail')">📋<span>Detail</span></button>
+      <button class="nav-btn" data-nav="history" onclick="showView('history')">💾<span>Saved</span></button>
+      <button class="nav-btn" data-nav="expert" onclick="showView('expert')">👷<span>Expert</span></button>
+    </div>
+  </nav>
+
+  <script>
+    const KEY = 'fixit_cases_v01';
+    let selectedCause = null;
+
+    const questions = [
+      { id: 'hum', text: 'Does the garbage disposal hum when switched on?' },
+      { id: 'reset', text: 'Is the reset button popped out under the disposal?' },
+      { id: 'water', text: 'Is water backing up into the sink?' },
+      { id: 'leak', text: 'Do you see any leaking under the sink?' },
+      { id: 'power', text: 'Did you already check the outlet/breaker/GFCI?' },
+      { id: 'smell', text: 'Is there a burning smell or smoke?' }
+    ];
+
+    const causes = [
+      {
+        id: 'jammed-disposal',
+        title: 'Jammed garbage disposal',
+        summary: 'Common when the unit hums but blades do not spin. Usually caused by stuck food, utensil, bone, glass, or debris.',
+        match: ['hum', 'water'],
+        danger: ['smell'],
+        safety: 'Turn power OFF before putting anything near the disposal. Never place fingers inside the unit. If there is smoke, burning smell, sparking, or damaged wiring, stop and call a professional.',
+        tools: ['Flashlight', 'Hex/Allen wrench', 'Needle-nose pliers', 'Bucket/towel'],
+        parts: ['No parts usually needed', 'Replacement splash guard if damaged'],
+        steps: [
+          'Turn off the wall switch and unplug the disposal if accessible.',
+          'Use a flashlight to inspect the chamber from above. Do not use your hand.',
+          'Use pliers to remove visible debris.',
+          'Insert hex wrench into the bottom center socket and rock it back and forth until it moves freely.',
+          'Press reset button, restore power, run cold water, and test briefly.'
+        ]
+      },
+      {
+        id: 'tripped-reset',
+        title: 'Tripped reset / overheated motor',
+        summary: 'Likely when the disposal is completely dead or stopped after a jam or heavy load.',
+        match: ['reset', 'power'],
+        danger: ['smell'],
+        safety: 'Let the unit cool before resetting. Do not repeatedly force reset if it immediately trips again. That can point to a jammed motor or electrical fault.',
+        tools: ['Flashlight'],
+        parts: ['No parts usually needed'],
+        steps: [
+          'Turn switch off.',
+          'Wait 5–10 minutes for the motor to cool.',
+          'Press the red reset button firmly under the disposal.',
+          'Run cold water and test the switch.',
+          'If it trips again, check for a jam before trying again.'
+        ]
+      },
+      {
+        id: 'clogged-trap',
+        title: 'Clogged P-trap or drain line',
+        summary: 'Likely when water backs up and the disposal may still run normally.',
+        match: ['water'],
+        danger: ['leak'],
+        safety: 'Place a bucket under the trap before loosening fittings. Avoid chemical drain cleaners with garbage disposals; they can splash, corrode parts, and create unsafe fumes.',
+        tools: ['Bucket', 'Towels', 'Channel-lock pliers', 'Small brush'],
+        parts: ['Trap washer kit', 'Replacement P-trap if cracked'],
+        steps: [
+          'Turn off the disposal and clear standing water with a cup or wet/dry vac if available.',
+          'Place bucket under the P-trap.',
+          'Loosen trap nuts carefully and remove the trap.',
+          'Clean debris and inspect washers for cracks.',
+          'Reassemble, run water, and check for leaks.'
+        ]
+      },
+      {
+        id: 'leaking-connection',
+        title: 'Loose or failed drain connection',
+        summary: 'Likely when there is water under the sink around trap fittings, disposal flange, dishwasher hose, or drain pipes.',
+        match: ['leak'],
+        danger: [],
+        safety: 'Dry the area first and identify the exact drip source. If water is near electrical outlets or wiring, shut off power before touching the area.',
+        tools: ['Flashlight', 'Towels', 'Channel-lock pliers'],
+        parts: ['Slip-joint washers', 'Plumber’s putty', 'Dishwasher hose clamp'],
+        steps: [
+          'Dry all pipes and fittings.',
+          'Run water briefly and watch for the first drip point.',
+          'Tighten loose slip nuts by hand, then slightly with pliers if needed.',
+          'Replace cracked washers or damaged fittings.',
+          'Retest with running water and disposal vibration.'
+        ]
+      }
+    ];
+
+    function init() {
+      renderQuestions();
+      renderHistory();
+      document.getElementById('issueText').value = 'Garbage disposal stopped working and water is not draining.';
+      document.getElementById('photoInput').addEventListener('change', handlePhoto);
+    }
+
+    function renderQuestions() {
+      const wrap = document.getElementById('questions');
+      wrap.innerHTML = questions.map(q => `
+        <label class="question" for="${q.id}">
+          <input id="${q.id}" type="checkbox" />
+          <span>${q.text}</span>
+        </label>
+      `).join('');
+    }
+
+    function checkedIds() {
+      return questions.filter(q => document.getElementById(q.id).checked).map(q => q.id);
+    }
+
+    function runDiagnosis() {
+      const checked = checkedIds();
+      const text = document.getElementById('issueText').value.toLowerCase();
+
+      const enriched = causes.map(cause => {
+        let score = 20;
+        cause.match.forEach(id => { if (checked.includes(id)) score += 22; });
+        cause.danger.forEach(id => { if (checked.includes(id)) score -= 10; });
+        if (text.includes('hum') && cause.id === 'jammed-disposal') score += 16;
+        if (text.includes('drain') || text.includes('water')) {
+          if (cause.id === 'clogged-trap' || cause.id === 'jammed-disposal') score += 14;
+        }
+        if (text.includes('leak') && cause.id === 'leaking-connection') score += 28;
+        if (text.includes('reset') && cause.id === 'tripped-reset') score += 24;
+        return { ...cause, score: Math.max(5, Math.min(98, score)) };
+      }).sort((a, b) => b.score - a.score);
+
+      renderResults(enriched);
+    }
+
+    function renderResults(list) {
+      document.getElementById('resultCount').textContent = `${list.length} found`;
+      const wrap = document.getElementById('results');
+      wrap.innerHTML = list.map(cause => `
+        <article class="cause-card ${selectedCause?.id === cause.id ? 'active' : ''}" onclick="openCause('${cause.id}')">
+          <div class="cause-head">
+            <strong>${cause.title}</strong>
+            <span class="match">${cause.score}% match</span>
+          </div>
+          <p>${cause.summary}</p>
+        </article>
+      `).join('');
+    }
+
+    function openCause(id) {
+      selectedCause = causes.find(c => c.id === id);
+      renderDetail(selectedCause);
+      showView('detail');
+    }
+
+    function renderDetail(cause) {
+      if (!cause) {
+        cause = causes[0];
+        selectedCause = cause;
+      }
+      document.getElementById('detailTitle').textContent = cause.title;
+      document.getElementById('safetyBox').textContent = 'Safety: ' + cause.safety;
+      renderList('toolsList', cause.tools);
+      renderList('partsList', cause.parts);
+      renderList('stepsList', cause.steps);
+    }
+
+    function renderList(id, items) {
+      document.getElementById(id).innerHTML = items.map(item => `<li>${item}</li>`).join('');
+    }
+
+    function showView(name) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById('view-' + name).classList.add('active');
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.nav === name));
+      if (name === 'detail') renderDetail(selectedCause || causes[0]);
+      if (name === 'history') renderHistory();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function handlePhoto(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        document.getElementById('photoBox').innerHTML = `<img src="${e.target.result}" alt="Uploaded repair issue photo" />`;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function saveCase() {
+      const cause = selectedCause || causes[0];
+      const entry = {
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+        date: new Date().toLocaleString(),
+        issue: document.getElementById('issueText').value || 'Untitled repair issue',
+        cause: cause.title
+      };
+      const history = JSON.parse(localStorage.getItem(KEY) || '[]');
+      history.unshift(entry);
+      localStorage.setItem(KEY, JSON.stringify(history.slice(0, 25)));
+      alert('Case saved.');
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const history = JSON.parse(localStorage.getItem(KEY) || '[]');
+      const wrap = document.getElementById('historyList');
+      if (!history.length) {
+        wrap.innerHTML = '<div class="empty">No saved repair cases yet.</div>';
+        return;
+      }
+      wrap.innerHTML = history.map(item => `
+        <div class="history-item">
+          <strong>${item.cause}</strong>
+          <span>${item.date}</span><br>
+          <span>${item.issue}</span>
+        </div>
+      `).join('');
+    }
+
+    function clearHistory() {
+      if (!confirm('Clear all saved cases?')) return;
+      localStorage.removeItem(KEY);
+      renderHistory();
+    }
+
+    function resetForm() {
+      document.getElementById('issueText').value = '';
+      questions.forEach(q => document.getElementById(q.id).checked = false);
+      document.getElementById('photoBox').innerHTML = `
+        <div>
+          <div style="font-size:34px;margin-bottom:6px;">📸</div>
+          <strong>Add a photo of the problem area</strong>
+          <p style="margin-top:5px;">Camera/file preview only in this prototype.</p>
+        </div>`;
+      selectedCause = null;
+      document.getElementById('results').innerHTML = '<div class="empty">Describe the issue and answer the checks to see possible causes.</div>';
+      document.getElementById('resultCount').textContent = '0 found';
+    }
+
+    init();
+  </script>
+</body>
+</html>
