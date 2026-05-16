@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FixIt App</title>
+<style>
+body{
+font-family:Arial,sans-serif;
+background:#f4f1ea;
+margin:0;
+padding:20px;
+color:#222;
+}
+.container{
+max-width:900px;
+margin:auto;
+background:white;
+padding:20px;
+border-radius:16px;
+box-shadow:0 4px 12px rgba(0,0,0,0.1);
+}
+h1{
+text-align:center;
+}
+.card{
+border:1px solid #ddd;
+padding:16px;
+margin-top:16px;
+border-radius:12px;
+background:#fafafa;
+}
+button{
+padding:12px 18px;
+border:none;
+border-radius:10px;
+background:#222;
+color:white;
+margin-top:10px;
+cursor:pointer;
+width:100%;
+}
+.option{
+display:block;
+margin:8px 0;
+padding:10px;
+background:#eee;
+border-radius:8px;
+cursor:pointer;
+}
+#results{
+display:none;
+}
+img{
+max-width:100%;
+border-radius:12px;
+margin-top:12px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+<h1>🔧 FixIt Diagnostic</h1>
+
+<div class="card">
+<h2>Garbage Disposal Issue</h2>
+<p>Answer the questions below as best you can.<br>
+<b>Pick whatever is closest — it doesn’t have to be exact.</b></p>
+
+<label class="option"><input type="radio" name="noise" value="humming"> Humming</label>
+<label class="option"><input type="radio" name="noise" value="clicking"> Clicking</label>
+<label class="option"><input type="radio" name="noise" value="none"> No Sound</label>
+<label class="option"><input type="radio" name="noise" value="grinding"> Grinding</label>
+
+<button onclick="diagnose()">Diagnose Issue</button>
+</div>
+
+<div id="results" class="card">
+<h2>Possible Problems</h2>
+
+<div id="problemText"></div>
+
+<h3>Simple Parts Diagram</h3>
+
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Garbage_disposal_unit.jpg/640px-Garbage_disposal_unit.jpg">
+
+<ul>
+<li>🔌 Power Connection</li>
+<li>⚙️ Grinding Chamber</li>
+<li>🚰 Drain Outlet</li>
+<li>🔄 Flywheel Area</li>
+<li>🛑 Reset Button</li>
+</ul>
+
+</div>
+</div>
+
+<script>
+function diagnose(){
+const selected = document.querySelector('input[name="noise"]:checked');
+
+if(!selected){
+alert("Please select the closest match.");
+return;
+}
+
+const results = document.getElementById("results");
+const text = document.getElementById("problemText");
+
+if(selected.value === "humming"){
+text.innerHTML = `
+<div class='card'>
+<h3>⚠️ Jammed Flywheel</h3>
+<p>The disposal likely has power but the internal flywheel may be jammed.</p>
+<button onclick="alert('Use an Allen wrench underneath the unit to manually rotate the flywheel.')">View Details</button>
+</div>`;
+}
+
+else if(selected.value === "none"){
+text.innerHTML = `
+<div class='card'>
+<h3>⚠️ No Power / Reset Issue</h3>
+<p>The unit may not be receiving power or the reset switch may be tripped.</p>
+<button onclick="alert('Check the outlet, breaker, and red reset button underneath the disposal.')">View Details</button>
+</div>`;
+}
+
+else if(selected.value === "clicking"){
+text.innerHTML = `
+<div class='card'>
+<h3>⚠️ Electrical Relay Issue</h3>
+<p>The disposal may have a failing internal switch or wiring issue.</p>
+<button onclick="alert('Turn off power before inspecting wiring or contacting a professional.')">View Details</button>
+</div>`;
+}
+
+else{
+text.innerHTML = `
+<div class='card'>
+<h3>⚠️ Internal Grinding Damage</h3>
+<p>The grinding components may be damaged or obstructed.</p>
+<button onclick="alert('Inspect for foreign objects inside the chamber after disconnecting power.')">View Details</button>
+</div>`;
+}
+
+results.style.display = "block";
+}
+</script>
+
+</body>
+</html>
