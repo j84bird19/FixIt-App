@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FixIt Diagnostic</title>
+<style>
+:root{
+  --bg:#f4f1ea; --card:#ffffff; --ink:#202124; --muted:#5f6368; --line:#dedbd4;
+  --gold:#f5c542; --gold-soft:#fff7d8; --blue-soft:#eef7ff; --red:#ef4444;
+  --shadow:0 10px 28px rgba(0,0,0,.10); --radius:18px; --topbar-h:78px; --bottombar-h:74px;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; padding-top:calc(var(--topbar-h) + 18px); padding-bottom:calc(var(--bottombar-h) + 18px);
+  background:linear-gradient(rgba(255,255,255,.66) 1px, transparent 1px),
+             linear-gradient(90deg, rgba(255,255,255,.66) 1px, transparent 1px), var(--bg);
+  background-size:96px 96px; color:var(--ink); font-family:Arial, Helvetica, sans-serif;
+}
+.top-nav,.bottom-nav{
+  position:fixed; left:0; right:0; z-index:1000; background:rgba(255,255,255,.96);
+  border-color:#e5ded3; box-shadow:0 6px 22px rgba(0,0,0,.09); backdrop-filter:blur(8px);
+}
+.top-nav{top:0; min-height:var(--topbar-h); border-bottom:1px solid #e5ded3}
+.bottom-nav{bottom:0; min-height:var(--bottombar-h); border-top:1px solid #e5ded3}
+.nav-inner{width:calc(100% - 8px); margin:auto; display:grid; align-items:center; gap:5px; padding:8px 0}
+.top-nav .nav-inner{grid-template-columns:48px 1fr}
+.nav-brand{font-size:14px; font-weight:900; text-align:center}
+.nav-actions{display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:4px}
+.nav-btn{
+  border:1px solid #ddd6cb; background:#fff; color:#202124; border-radius:12px; min-height:54px;
+  padding:5px 2px; font-weight:800; cursor:pointer; font-size:10px; line-height:1.05;
+}
+.nav-btn.primary{background:#202020;color:#fff;border-color:#202020}
+.nav-btn.warn{background:#fff7ed;color:#9a3412;border-color:#fed7aa}
+.nav-btn.green{background:#ecfdf5;color:#166534;border-color:#bbf7d0}
+.bottom-nav .nav-inner{grid-template-columns:repeat(5,minmax(0,1fr)); gap:4px}
+.bottom-nav .nav-btn{display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:58px}
+.nav-icon{font-size:17px}.nav-text{font-size:10px}
+
+.page{
+  width:min(1180px, calc(100% - 28px)); margin:0 auto 22px; background:rgba(255,255,255,.94);
+  border:1px solid rgba(222,219,212,.9); box-shadow:var(--shadow); border-radius:24px; padding:22px;
+}
+.hidden{display:none!important}
+.home-title{text-align:center;margin-bottom:22px}.home-title h1{margin:0;font-size:clamp(30px,5vw,42px)}
+.home-title p,.small{color:var(--muted)}
+.search-box{display:flex;gap:10px;margin:18px 0 22px}.search-box input{flex:1;border:1px solid var(--line);border-radius:14px;padding:14px;font-size:16px}
+.product-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.product-card,.symptom-btn,.result-card{
+  border:1px solid #e2ded7; background:#fff; border-radius:16px; cursor:pointer; font-weight:900;
+}
+.product-card{padding:18px 12px;text-align:center;min-height:94px;display:flex;flex-direction:column;justify-content:center;gap:8px}
+.product-icon{font-size:30px}.product-card:hover{background:var(--gold-soft);border-color:#f0c94f}
+.symptom-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.symptom-btn{padding:15px}
+.step-back,.secondary-btn{
+  border:1px solid #ddd8cf; background:#fff; border-radius:999px; padding:10px 14px; font-weight:900; cursor:pointer;
+}
+.primary-btn{
+  width:100%; border:0; border-radius:10px; padding:14px 16px; font-weight:800; font-size:16px;
+  cursor:pointer; background:#202020; color:#fff; box-shadow:0 3px 0 rgba(0,0,0,.3);
+}
+.question-card,.detail,.overview-card{
+  background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:18px; box-shadow:0 5px 14px rgba(0,0,0,.04);
+}
+.option{display:flex;align-items:center;gap:10px;width:100%;background:#f1f1ef;border:1px solid transparent;border-radius:9px;padding:13px 12px;margin:10px 0;cursor:pointer}
+.option input{width:18px;height:18px;accent-color:#1976d2}.option:has(input:checked){background:#eaf5ff;border-color:#8fc7ff}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:18px}
+.page-head h1{margin:0;font-size:clamp(28px,5vw,40px)}
+.result-card{display:grid;grid-template-columns:58px 1fr auto;gap:14px;align-items:center;padding:15px;width:100%;text-align:left;margin-bottom:12px}
+.result-card.most-likely{background:var(--gold-soft);border-color:#f0c94f}.result-cta{font-weight:900;white-space:nowrap}
+.icon-big{font-size:35px;width:48px;text-align:center}
+.badge{border-radius:10px;padding:7px 10px;background:#f1f2f3;color:#5f6368;font-weight:800;font-size:13px}
+.badge.gold{background:#ffe79a;color:#8a5a00}
+.detail{max-width:760px;margin:auto}.detail-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:16px}
+.detail-title{display:flex;align-items:center;gap:12px}.warn{font-size:34px}
+.diagram-wrap{margin:18px 0;background:#fff;border-radius:14px;padding:10px 0}svg{width:100%;height:auto;display:block}
+.label-line{stroke:#a8a8a8;stroke-width:1.6}.part-label{font-size:14px;font-weight:700;fill:#202124}.part-label.highlight{fill:#ef4444;font-size:17px}
+.part{fill:#d5d9d3;stroke:#222;stroke-width:2}.part-dark{fill:#9aa09a;stroke:#222;stroke-width:2}.part-blue{fill:#17a9d6;stroke:#222;stroke-width:2}
+.highlight-shape{fill:rgba(239,68,68,.12);stroke:#ef4444;stroke-width:4;filter:drop-shadow(0 0 6px rgba(239,68,68,.45))}
+.info{background:var(--blue-soft);border:1px solid #a8d6ff;border-radius:12px;padding:14px;margin-top:16px}.info strong{display:block;margin-bottom:8px}
+#repairGuide{display:none;margin-top:16px;background:#fffdf8;border:1px solid #eadfbf;border-radius:12px;padding:14px}.safety{color:#8a2f00;font-weight:800}
+.overview-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.overview-card.full{grid-column:1/-1}
+.summary-row{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #eee9df;padding:10px 0}.summary-label{font-weight:900;color:#5f6368}.summary-value{font-weight:900;text-align:right}
+.drawer{display:none;position:fixed;inset:calc(var(--topbar-h) + 12px) 14px calc(var(--bottombar-h) + 12px);z-index:1500;background:#fff;border:1px solid #dedbd4;border-radius:22px;box-shadow:0 20px 50px rgba(0,0,0,.18);overflow:auto}
+.drawer.open{display:block}.drawer-head{position:sticky;top:0;background:#fff;border-bottom:1px solid #eee9df;padding:16px;display:flex;justify-content:space-between}.drawer-title{font-size:22px;font-weight:900}
+.drawer-body{padding:18px}.close-btn{border:1px solid #ddd8cf;background:#fff;border-radius:999px;width:38px;height:38px;font-size:20px;cursor:pointer}
+.placeholder-card,.saved-item{border:1px solid #e3e0da;background:#fafafa;border-radius:14px;padding:16px;margin:12px 0}
+.saved-item{display:flex;justify-content:space-between;align-items:center;background:#fff}.mini-btn{border:1px solid #ddd8cf;background:#202020;color:#fff;border-radius:10px;padding:9px 11px;font-weight:800;cursor:pointer}
+.toast{position:fixed;left:50%;bottom:calc(var(--bottombar-h) + 18px);transform:translateX(-50%);z-index:2000;background:#202020;color:#fff;padding:12px 16px;border-radius:999px;font-weight:800;display:none}.toast.show{display:block}
+@media(max-width:850px){
+  .product-grid,.symptom-grid,.overview-grid{grid-template-columns:1fr}.search-box{flex-direction:column}
+  .page{padding:18px}.page-head{display:block}.result-card{grid-template-columns:44px 1fr}.result-cta{grid-column:1/-1}
+}
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="nav-inner">
+    <div class="nav-brand">🔧 FixIt</div>
+    <div class="nav-actions">
+      <button class="nav-btn" data-panel="account">👤 Account</button>
+      <button class="nav-btn primary" id="newIssueBtn">＋ New</button>
+      <button class="nav-btn" id="backBtn">← Back</button>
+      <button class="nav-btn" id="forwardBtn">Next →</button>
+      <button class="nav-btn green" id="saveSearchBtn">💾 Save</button>
+      <button class="nav-btn" data-panel="load">📂 Load</button>
+    </div>
+  </div>
+</nav>
+
+<section class="page" id="homePage">
+  <div id="productStep">
+    <div class="home-title"><h1>🔧 Start New Issue</h1><p>What are you trying to fix today?</p></div>
+    <div class="search-box"><input id="productSearch" placeholder="Search product, like refrigerator, sink, dryer..." /><button class="primary-btn" id="searchProductBtn" style="width:auto;min-width:120px;margin-top:0;">Search</button></div>
+    <div class="product-grid">
+      <button class="product-card" data-product="Garbage Disposal"><span class="product-icon">⚙️</span>Garbage Disposal</button>
+      <button class="product-card" data-product="Refrigerator"><span class="product-icon">🧊</span>Refrigerator</button>
+      <button class="product-card" data-product="Sink Faucet"><span class="product-icon">🚰</span>Sink Faucet</button>
+      <button class="product-card" data-product="Toilet"><span class="product-icon">🚽</span>Toilet</button>
+      <button class="product-card" data-product="Dishwasher"><span class="product-icon">🍽️</span>Dishwasher</button>
+      <button class="product-card" data-product="Electrical"><span class="product-icon">💡</span>Electrical</button>
+    </div>
+  </div>
+  <div id="symptomStep" class="hidden">
+    <button class="step-back" id="backToProducts">← Back to products</button>
+    <div class="home-title"><h1 id="selectedProductTitle">Selected Product</h1><p>What is happening? Pick whatever is closest.</p></div>
+    <div class="symptom-grid">
+      <button class="symptom-btn" data-symptom="Won’t turn on">Won’t turn on</button>
+      <button class="symptom-btn" data-symptom="Making noise">Making noise</button>
+      <button class="symptom-btn" data-symptom="Leaking">Leaking</button>
+      <button class="symptom-btn" data-symptom="Smells bad">Smells bad</button>
+      <button class="symptom-btn" data-symptom="Not working right">Not working right</button>
+      <button class="symptom-btn" data-symptom="Not sure">Not sure</button>
+    </div>
+  </div>
+</section>
+
+<section class="page hidden" id="questionsPage">
+  <div class="page-head"><div><h1>Garbage Disposal Issue</h1><p class="small">Answer as best you can. Pick whatever is closest — it doesn’t have to be exact.</p></div></div>
+  <div class="question-card">
+    <h2>What kind of noise do you hear when you turn it on?</h2>
+    <label class="option"><input type="radio" name="noise" value="humming" checked> Humming</label>
+    <label class="option"><input type="radio" name="noise" value="clicking"> Clicking</label>
+    <label class="option"><input type="radio" name="noise" value="none"> No Sound</label>
+    <label class="option"><input type="radio" name="noise" value="grinding"> Grinding</label>
+    <label class="option"><input type="radio" name="noise" value="vibration"> Loud Vibration</label>
+    <label class="option"><input type="radio" name="noise" value="unsure"> Not Sure</label>
+    <button class="primary-btn" id="diagnoseBtn">Diagnose Issue</button>
+  </div>
+</section>
+
+<section class="page hidden" id="resultsPage">
+  <div class="page-head"><div><h1>🎯 Possible Diagnoses</h1><p class="small">Click any result for more details.</p></div><button class="secondary-btn" id="backToQuestionsFromResults">← Back</button></div>
+  <div id="resultsPageList"></div>
+</section>
+
+<section class="page hidden" id="detailPage">
+  <div class="page-head"><div><h1>Issue Details</h1><p class="small">Problem explanation, diagram, and repair guide.</p></div><button class="secondary-btn" id="backToResultsFromDetail">← Back to Results</button></div>
+  <div class="detail" id="detailPanel">
+    <div class="detail-head">
+      <div class="detail-title"><span class="warn" id="detailIcon">⚠️</span><div><h2 id="detailTitle">Jammed Flywheel</h2></div></div>
+      <span class="badge gold" id="detailBadge">Most Likely</span>
+    </div>
+    <p id="detailText"></p><h3>Problem Area</h3><p id="problemArea"></p>
+    <div class="diagram-wrap">
+      <svg viewBox="0 0 620 720" aria-label="Garbage disposal parts diagram">
+        <line class="label-line" x1="78" y1="62" x2="315" y2="62"/><line class="label-line" x1="78" y1="136" x2="330" y2="136"/><line class="label-line" x1="78" y1="218" x2="328" y2="218"/><line class="label-line" x1="78" y1="295" x2="328" y2="295"/><line class="label-line" x1="78" y1="363" x2="328" y2="363"/><line class="label-line" x1="78" y1="402" x2="328" y2="402"/><line class="label-line" x1="78" y1="448" x2="328" y2="448"/><line class="label-line" x1="78" y1="520" x2="338" y2="520"/><line class="label-line" x1="78" y1="626" x2="352" y2="626"/>
+        <text class="part-label" x="22" y="67">Flange</text><text class="part-label" x="22" y="141">Support Ring</text><text class="part-label" x="22" y="223">Mounting Bolts</text><text class="part-label" x="22" y="292">Upper</text><text class="part-label" x="22" y="311">Dishwasher Inlet</text><text class="part-label" x="22" y="368">Grind Ring</text><text class="part-label" x="22" y="407">Impeller</text><text class="part-label highlight" id="flywheelLabel" x="22" y="453">Flywheel</text><text class="part-label" x="22" y="485">Drain</text><text class="part-label" x="22" y="525">Motor Shaft</text><text class="part-label" x="22" y="631">Motor</text>
+        <g><ellipse class="part" cx="420" cy="62" rx="82" ry="24"/><ellipse fill="#f5f5f0" stroke="#222" stroke-width="2" cx="420" cy="62" rx="51" ry="12"/></g>
+        <g><ellipse class="part-dark" cx="420" cy="136" rx="78" ry="27"/><ellipse fill="#fff" stroke="#222" stroke-width="2" cx="420" cy="136" rx="47" ry="16"/></g>
+        <g><path class="part" d="M328 218 Q420 180 512 218 L535 305 Q420 340 305 305 Z"/><ellipse fill="#cfd3cd" stroke="#222" stroke-width="2" cx="420" cy="218" rx="92" ry="28"/><circle cx="488" cy="277" r="15" fill="#eee" stroke="#222" stroke-width="2"/></g>
+        <g><path class="part" d="M315 375 Q420 336 525 375 L525 467 Q420 505 315 467 Z"/><ellipse fill="#cfd3cd" stroke="#222" stroke-width="2" cx="420" cy="375" rx="105" ry="34"/><circle cx="420" cy="385" r="10" fill="#eee" stroke="#222" stroke-width="2"/><circle cx="470" cy="436" r="31" fill="#eee" stroke="#222" stroke-width="2"/></g>
+        <g id="highlightLayer"></g>
+        <rect x="409" y="492" width="22" height="82" fill="#ccc" stroke="#222" stroke-width="2"/>
+        <g><path class="part-blue" d="M304 580 Q420 535 536 580 L536 680 Q420 716 304 680 Z"/><ellipse fill="#9aa09a" stroke="#222" stroke-width="2" cx="420" cy="580" rx="116" ry="43"/><circle cx="420" cy="580" r="28" fill="#777" stroke="#222" stroke-width="2"/></g>
+      </svg>
+    </div>
+    <div class="info"><strong>ⓘ What this means</strong><span id="meaningText"></span></div>
+    <button class="primary-btn" id="repairBtn" style="margin-top:16px;">View Repair Guide →</button>
+    <button class="secondary-btn" id="overviewBtn" style="width:100%;margin-top:12px;border-radius:10px;">View Full Overview</button>
+    <div id="repairGuide"></div>
+  </div>
+</section>
+
+<section class="page hidden" id="overviewPage">
+  <div class="page-head"><div><h1>📋 Issue Overview</h1><p class="small">Everything from this search in one place.</p></div><button class="secondary-btn" id="editDiagnosisFromOverview">← Results</button></div>
+  <div class="overview-grid">
+    <div class="overview-card"><h2>Search Summary</h2><div class="summary-row"><span class="summary-label">Product</span><span class="summary-value" id="overviewProduct"></span></div><div class="summary-row"><span class="summary-label">Symptom</span><span class="summary-value" id="overviewSymptom"></span></div><div class="summary-row"><span class="summary-label">Answer</span><span class="summary-value" id="overviewAnswer"></span></div><div class="summary-row"><span class="summary-label">Diagnosis</span><span class="summary-value" id="overviewDiagnosis"></span></div></div>
+    <div class="overview-card"><h2>What This Means</h2><p id="overviewMeaning"></p><div class="info"><strong>Safety note</strong>Disconnect power before inspecting, reaching near, or attempting repair on the unit.</div></div>
+    <div class="overview-card full"><h2>Possible Diagnoses</h2><div id="overviewDiagnoses"></div></div>
+    <div class="overview-card full"><h2>Next Actions</h2><button class="primary-btn" id="overviewRepair">Repair Guide</button><button class="secondary-btn" id="overviewSave" style="width:100%;margin-top:10px;border-radius:10px;">Save Overview</button></div>
+  </div>
+</section>
+
+<nav class="bottom-nav">
+  <div class="nav-inner">
+    <button class="nav-btn" data-panel="videos"><span class="nav-icon">▶️</span><span class="nav-text">Videos</span></button>
+    <button class="nav-btn" data-panel="chat"><span class="nav-icon">💬</span><span class="nav-text">Ask</span></button>
+    <button class="nav-btn" data-panel="call"><span class="nav-icon">📹</span><span class="nav-text">Call</span></button>
+    <button class="nav-btn warn" data-panel="safety"><span class="nav-icon">🚨</span><span class="nav-text">Safety</span></button>
+    <button class="nav-btn green" data-panel="schedule"><span class="nav-icon">📅</span><span class="nav-text">Schedule</span></button>
+  </div>
+</nav>
+
+<div class="drawer" id="drawer"><div class="drawer-head"><div class="drawer-title" id="drawerTitle">Panel</div><button class="close-btn" id="closeDrawer">×</button></div><div class="drawer-body" id="drawerBody"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const diagnoses = {
+  jammed:{title:"Jammed Flywheel",icon:"⚠️",badge:"Most Likely",summary:"The disposal likely has power but the internal flywheel may be jammed.",area:"The flywheel is stuck and cannot turn.",meaning:"Something may be stuck in the disposal preventing the flywheel from spinning.",highlight:"flywheel",guide:["Turn power off at the switch and breaker first.","Use the correct Allen wrench underneath the disposal to gently rotate the flywheel.","Remove visible debris with pliers or tongs, never your fingers.","Press the reset button after the jam is cleared, then test briefly."]},
+  motor:{title:"Motor Issue",icon:"⚙️",badge:"Possible",summary:"The motor may be faulty or not receiving enough power.",area:"The motor section may be overheated, weak, or failing.",meaning:"If the unit has power but cannot run correctly, the motor may be damaged or overheated.",highlight:"motor",guide:["Turn off power before touching the unit.","Let the disposal cool for 10–15 minutes if it feels hot.","Press reset and test again briefly.","If it still fails, replacement may be safer than repair."]},
+  power:{title:"Check Outlet / Switch First",icon:"🔌",badge:"Start Here",summary:"The disposal may simply not be getting power from the outlet, wall switch, or GFCI.",area:"Start with the outlet, wall switch, plug, and nearby GFCI reset.",meaning:"No sound usually means the first thing to check is whether power is reaching the unit at all.",highlight:"power",guide:["Make sure the disposal is plugged in firmly.","Try the wall switch again while listening closely.","Check nearby GFCI outlets and press reset if needed.","Check the breaker only after the simple outlet and switch checks."]},
+  reset:{title:"Press Reset Button",icon:"🔴",badge:"Easy Check",summary:"The overload reset button may have popped and may only need to be pressed back in.",area:"The reset button underneath the disposal may have tripped.",meaning:"A disposal can shut itself off when jammed, overheated, or overloaded. This is an easy check before assuming major damage.",highlight:"reset",guide:["Turn the disposal switch off.","Find the red reset button under the unit.","Press it firmly until it clicks.","Run cold water and test briefly."]}
+};
+const rules={
+  humming:["jammed","reset","motor","power"],
+  clicking:["reset","power","jammed","motor"],
+  none:["power","reset","motor","jammed"],
+  grinding:["jammed","reset","motor","power"],
+  vibration:["jammed","reset","motor","power"],
+  unsure:["reset","power","jammed","motor"]
+};
+
+let selectedProduct=localStorage.getItem("fixitSelectedProduct")||"";
+let selectedSymptom=localStorage.getItem("fixitSelectedSymptom")||"Making noise";
+let currentOrder=JSON.parse(localStorage.getItem("fixitCurrentOrder")||"[]");
+let currentDiagnosis=localStorage.getItem("fixitCurrentDiagnosis")||"jammed";
+let currentView=localStorage.getItem("fixitCurrentView")||"home";
+
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1700)}
+function showOnly(view){["homePage","questionsPage","resultsPage","detailPage","overviewPage"].forEach(id=>document.getElementById(id).classList.add("hidden"));document.getElementById(view+"Page")?.classList.remove("hidden");if(view==="home")document.getElementById("homePage").classList.remove("hidden");localStorage.setItem("fixitCurrentView",view);currentView=view;window.scrollTo({top:0,behavior:"smooth"})}
+function showStep(step){document.getElementById("productStep").classList.toggle("hidden",step!=="product");document.getElementById("symptomStep").classList.toggle("hidden",step!=="symptom")}
+function chooseProduct(product){selectedProduct=product;localStorage.setItem("fixitSelectedProduct",product);document.getElementById("selectedProductTitle").textContent=product;showStep("symptom")}
+function startProductFlow(product,symptom="Making noise"){selectedProduct=product;selectedSymptom=symptom;localStorage.setItem("fixitSelectedProduct",product);localStorage.setItem("fixitSelectedSymptom",symptom);if(product!=="Garbage Disposal"){toast(product+" diagnostics coming next");return}document.querySelector("input[value='humming']").checked=true;localStorage.setItem("fixitNoiseAnswer","humming");showOnly("questions");toast("Garbage disposal search started")}
+function showHomePage(){selectedProduct="";selectedSymptom="Making noise";["fixitSelectedProduct","fixitNoiseAnswer","fixitCurrentDiagnosis","fixitCurrentOrder"].forEach(k=>localStorage.removeItem(k));localStorage.setItem("fixitSelectedSymptom",selectedSymptom);document.getElementById("productSearch").value="";showStep("product");showOnly("home");toast("New search started")}
+
+function renderResults(order){currentOrder=order;localStorage.setItem("fixitCurrentOrder",JSON.stringify(order));const list=document.getElementById("resultsPageList");list.innerHTML="";order.forEach((key,index)=>{const item=diagnoses[key];const card=document.createElement("button");card.className="result-card"+(index===0?" most-likely":"");card.innerHTML=`<div class="icon-big">${item.icon}</div><div><h3>${item.title}</h3><p class="small" style="margin:6px 0 0">${item.summary}</p><p class="small" style="margin:8px 0 0"><strong>${index===0?"Start here — easiest/most likely check":"Next possible check"}</strong></p></div><div class="result-cta">Click for more details ›</div>`;card.onclick=()=>openDetail(key,index);list.appendChild(card)});showOnly("results")}
+function selectDiagnosis(key,index=0){currentDiagnosis=key;localStorage.setItem("fixitCurrentDiagnosis",key);const d=diagnoses[key];document.getElementById("detailIcon").textContent=d.icon;document.getElementById("detailTitle").textContent=d.title;document.getElementById("detailBadge").textContent=index===0?"Start Here":d.badge;document.getElementById("detailBadge").className="badge "+(index===0?"gold":"");document.getElementById("detailText").textContent=d.summary;document.getElementById("problemArea").textContent=d.area;document.getElementById("meaningText").textContent=d.meaning;document.getElementById("repairGuide").style.display="none";document.getElementById("repairGuide").innerHTML="";drawHighlight(d.highlight);document.getElementById("repairBtn").onclick=()=>showRepair(d)}
+function openDetail(key,index=0){selectDiagnosis(key,index);showOnly("detail")}
+function drawHighlight(type){const layer=document.getElementById("highlightLayer");document.getElementById("flywheelLabel").setAttribute("class","part-label");let shape="";if(type==="flywheel"){document.getElementById("flywheelLabel").setAttribute("class","part-label highlight");shape=`<ellipse class="highlight-shape" cx="420" cy="420" rx="115" ry="82"/><line x1="78" y1="448" x2="315" y2="448" stroke="#ef4444" stroke-width="3"/>`}if(type==="motor")shape=`<ellipse class="highlight-shape" cx="420" cy="632" rx="124" ry="91"/>`;if(type==="power")shape=`<circle class="highlight-shape" cx="488" cy="277" r="28"/><path class="highlight-shape" d="M304 580 Q420 535 536 580 L536 680 Q420 716 304 680 Z" opacity=".35"/>`;if(type==="reset")shape=`<circle class="highlight-shape" cx="470" cy="436" r="38"/>`;layer.innerHTML=shape}
+function showRepair(d){const guide=document.getElementById("repairGuide");guide.style.display="block";guide.innerHTML=`<h4>Repair Guide</h4><p class="safety">Safety first: disconnect power before inspecting the disposal.</p><ol>${d.guide.map(s=>`<li>${s}</li>`).join("")}</ol>`}
+
+function getCurrentState(){const answer=document.querySelector("input[name='noise']:checked")?.value||localStorage.getItem("fixitNoiseAnswer")||"humming";const d=diagnoses[currentDiagnosis];return{type:"overview-snapshot",product:"Garbage Disposal",symptom:selectedSymptom,answer,diagnosis:currentDiagnosis,diagnosisTitle:d.title,diagnosisSummary:d.summary,meaning:d.meaning,problemArea:d.area,highlight:d.highlight,possibleDiagnoses:currentOrder.map((key,i)=>({key,title:diagnoses[key].title,summary:diagnoses[key].summary,rank:i===0?"Start Here":"Next Check"})),repairGuide:d.guide,safetyNote:"Disconnect power before inspecting, reaching near, or attempting repair on the unit.",date:new Date().toLocaleString()}}
+function showOverview(){const state=getCurrentState();const d=diagnoses[currentDiagnosis];document.getElementById("overviewProduct").textContent=state.product;document.getElementById("overviewSymptom").textContent=state.symptom;document.getElementById("overviewAnswer").textContent=state.answer;document.getElementById("overviewDiagnosis").textContent=d.title;document.getElementById("overviewMeaning").textContent=d.meaning;document.getElementById("overviewDiagnoses").innerHTML=currentOrder.map((key,i)=>`<div class="saved-item"><div><strong>${i===0?"Start Here: ":"Next Check: "}${diagnoses[key].title}</strong><p class="small">${diagnoses[key].summary}</p></div><button class="mini-btn" onclick="openDetail('${key}',${i})">View</button></div>`).join("");showOnly("overview")}
+function saveSearch(){const items=JSON.parse(localStorage.getItem("fixitSavedSearches")||"[]");items.unshift(getCurrentState());localStorage.setItem("fixitSavedSearches",JSON.stringify(items.slice(0,12)));toast("Overview saved ✅")}
+function loadSaved(i){const item=JSON.parse(localStorage.getItem("fixitSavedSearches")||"[]")[i];if(!item)return;selectedSymptom=item.symptom||"Making noise";currentOrder=(item.possibleDiagnoses||[]).map(d=>d.key);currentDiagnosis=item.diagnosis||currentOrder[0]||"jammed";localStorage.setItem("fixitSelectedSymptom",selectedSymptom);localStorage.setItem("fixitCurrentOrder",JSON.stringify(currentOrder));localStorage.setItem("fixitCurrentDiagnosis",currentDiagnosis);const input=document.querySelector(`input[value='${item.answer||"humming"}']`);if(input)input.checked=true;localStorage.setItem("fixitNoiseAnswer",item.answer||"humming");document.getElementById("drawer").classList.remove("open");showOverview();toast("Saved overview loaded ✅")}
+function savedHTML(){const items=JSON.parse(localStorage.getItem("fixitSavedSearches")||"[]");if(!items.length)return`<div class="placeholder-card"><h3>No saved searches yet</h3><p>Tap Save after reviewing an overview.</p></div>`;return items.map((item,i)=>`<div class="saved-item"><div><strong>${item.product}: ${item.diagnosisTitle}</strong><p class="small">${item.date} • ${item.symptom} • Answer: ${item.answer}</p></div><button class="mini-btn" onclick="loadSaved(${i})">Load Overview</button></div>`).join("")}
+function openDrawer(type){const d=diagnoses[currentDiagnosis];const panels={account:["👤 My Account","<div class='placeholder-card'><h3>Account Area</h3><p>Saved repairs, profile, expert history, and subscriptions will live here.</p></div>"],load:["📂 Load Search",savedHTML()],videos:[`▶️ Videos for: ${d.title}`,"<div class='placeholder-card'>Issue-specific repair videos will appear here.</div>"],chat:["💬 Ask an Expert","<div class='placeholder-card'>Expert chat will receive the current overview case file.</div>"],call:["📹 Call an Expert","<div class='placeholder-card'>Video-call repair help will live here.</div>"],safety:["🚨 Safety / Report Issue","<div class='placeholder-card'>Emergency utility links and safety reporting will live here.</div>"],schedule:["📅 Schedule Repair","<div class='placeholder-card'>Approved local repair pros will appear here.</div>"]};document.getElementById("drawerTitle").textContent=panels[type][0];document.getElementById("drawerBody").innerHTML=panels[type][1];document.getElementById("drawer").classList.add("open")}
+
+document.querySelectorAll(".product-card").forEach(card=>card.onclick=()=>chooseProduct(card.dataset.product));
+document.querySelectorAll(".symptom-btn").forEach(btn=>btn.onclick=()=>startProductFlow(selectedProduct||"Garbage Disposal",btn.dataset.symptom));
+document.getElementById("searchProductBtn").onclick=()=>{const term=document.getElementById("productSearch").value.trim();if(!term){toast("Type or choose a product");return}chooseProduct(term.toLowerCase().includes("garbage")||term.toLowerCase().includes("disposal")?"Garbage Disposal":term)};
+document.getElementById("backToProducts").onclick=()=>showStep("product");
+document.getElementById("diagnoseBtn").onclick=()=>{const v=document.querySelector("input[name='noise']:checked").value;localStorage.setItem("fixitNoiseAnswer",v);renderResults(rules[v])};
+document.getElementById("backToQuestionsFromResults").onclick=()=>showOnly("questions");
+document.getElementById("backToResultsFromDetail").onclick=()=>showOnly("results");
+document.getElementById("overviewBtn").onclick=showOverview;document.getElementById("editDiagnosisFromOverview").onclick=()=>showOnly("results");document.getElementById("overviewRepair").onclick=()=>openDetail(currentDiagnosis,currentOrder.indexOf(currentDiagnosis));document.getElementById("overviewSave").onclick=saveSearch;
+document.getElementById("newIssueBtn").onclick=showHomePage;document.getElementById("saveSearchBtn").onclick=saveSearch;
+document.querySelectorAll("[data-panel]").forEach(btn=>btn.onclick=()=>openDrawer(btn.dataset.panel));document.getElementById("closeDrawer").onclick=()=>document.getElementById("drawer").classList.remove("open");
+document.getElementById("backBtn").onclick=()=>history.back();document.getElementById("forwardBtn").onclick=()=>history.forward();
+
+function restore(){const savedNoise=localStorage.getItem("fixitNoiseAnswer");if(savedNoise){const input=document.querySelector(`input[value='${savedNoise}']`);if(input)input.checked=true}if(!currentOrder.length && savedNoise)currentOrder=rules[savedNoise]||rules.humming;if(currentOrder.length && (currentView==="results"||currentView==="detail"||currentView==="overview")){renderResults(currentOrder);if(currentView==="detail"){openDetail(currentDiagnosis,currentOrder.indexOf(currentDiagnosis))}else if(currentView==="overview"){showOverview()}return}if(currentView==="questions")showOnly("questions");else showOnly("home")}
+restore();
+</script>
+</body>
+</html>
